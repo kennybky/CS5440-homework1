@@ -30,7 +30,8 @@ public class NetworkUtils {
     public static final String PARAM_SOURCE = "source";
     public static final String PARAM_SORT ="sortBy";
     public static final String PARAM_KEY = "apiKey";
-    public static final String API_KEY = "e12e72b020064032a687304c8073ca69";
+    
+    public static final String API_KEY = ""; //insert api key here
 
 
     public static URL buildUrl(String source, String sortBy) {
