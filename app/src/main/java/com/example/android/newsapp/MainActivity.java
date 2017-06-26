@@ -1,8 +1,12 @@
 package com.example.android.newsapp;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -10,13 +14,19 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import com.example.android.newsapp.models.NewsItem;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements NewsAdapter.ListItemClickListener {
 
-    private TextView textView;
+    Toast mToast;
+    private RecyclerView mRecyclerView;
+    private NewsAdapter mNewsAdapter;
     private ProgressBar progressBar;
 
     @Override
@@ -25,8 +35,30 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         progressBar = (ProgressBar) findViewById(R.id.progressbar);
 
-        textView = (TextView) findViewById(R.id.displayResults);
+        mRecyclerView = (RecyclerView) findViewById(R.id.recyclerview_news);
+
+        LinearLayoutManager layoutManager
+                = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
+
+
+
+        mRecyclerView.setLayoutManager(layoutManager);
+        mRecyclerView.setHasFixedSize(true);
+        mNewsAdapter = new NewsAdapter(this);
+        mRecyclerView.setAdapter(mNewsAdapter);
+        loadNewsData();
     }
+
+    public void loadNewsData() {
+        showNewsDataView();
+        NetworkTask task = new NetworkTask();
+        task.execute();
+    }
+
+    private void showNewsDataView() {
+        mRecyclerView.setVisibility(View.VISIBLE);
+    }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -38,15 +70,24 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         int itemNumber = item.getItemId();
         if (itemNumber == R.id.search) {
-            NetworkTask task = new NetworkTask();
-            task.execute();
+            mNewsAdapter.setNewsData(null);
+        loadNewsData();
         }
         return true;
     }
 
+    @Override
+    public void onListItemClick(int position) {
+    ArrayList<NewsItem> data = mNewsAdapter.getNewsData();
+        Uri webpage = Uri.parse(data.get(position).getUrl());
+        Intent intent = new Intent(Intent.ACTION_VIEW, webpage);
+        if (intent.resolveActivity(getPackageManager()) != null) {
+            startActivity(intent);
+        }
+    }
 
 
-    class NetworkTask extends AsyncTask<URL, Void, String> {
+    class NetworkTask extends AsyncTask<URL, Void, ArrayList<NewsItem>> {
 
         @Override
         protected void onPreExecute() {
@@ -55,12 +96,13 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        protected String doInBackground(URL... urls) {
-            String result = null;
+        protected ArrayList<NewsItem> doInBackground(URL... urls) {
+            ArrayList<NewsItem> result = null;
             URL  url = NetworkUtils.buildUrl("the-next-web", "latest");
             try {
-                result = NetworkUtils.getResponseFromHttpUrl(url);
-            } catch (IOException e) {
+                String json = NetworkUtils.getResponseFromHttpUrl(url);
+                result = NetworkUtils.parseJson(json);
+            } catch (Exception e) {
                 e.printStackTrace();
             }
             return result;
@@ -69,13 +111,15 @@ public class MainActivity extends AppCompatActivity {
 
 
         @Override
-        protected void onPostExecute(String s) {
-            super.onPostExecute(s);
+        protected void onPostExecute(ArrayList<NewsItem> items) {
+            super.onPostExecute(items);
             progressBar.setVisibility(View.GONE);
-            if(s == null) {
-                textView.setText("Sorry, no text was recieved");
+            if(items == null) {
+              mToast= Toast.makeText(MainActivity.this, "No items", Toast.LENGTH_LONG );
+                mToast.show();
             } else {
-                textView.setText(s);
+                    showNewsDataView();
+                    mNewsAdapter.setNewsData(items);
             }
         }
 
