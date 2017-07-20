@@ -55,7 +55,7 @@ public class MainActivity extends AppCompatActivity implements NewsAdapter.ListI
         mRecyclerView.setHasFixedSize(true);
 
         Bundle queryBundle = new Bundle();
-        getSupportLoaderManager().initLoader(NEWS_APP_LOADER, null, MainActivity.this);
+
     //loadNewsData();
     }
 
@@ -76,6 +76,7 @@ public class MainActivity extends AppCompatActivity implements NewsAdapter.ListI
         cursor = DatabaseUtils.getAll(db);
         mNewsAdapter = new NewsAdapter(cursor, this);
         mRecyclerView.setAdapter(mNewsAdapter);
+        getSupportLoaderManager().initLoader(NEWS_APP_LOADER, null, MainActivity.this);
     }
 
     @Override
@@ -96,7 +97,6 @@ public class MainActivity extends AppCompatActivity implements NewsAdapter.ListI
     public boolean onOptionsItemSelected(MenuItem item) {
         int itemNumber = item.getItemId();
         if (itemNumber == R.id.search) {
-            mNewsAdapter.swapCursor(null);
             LoaderManager loaderManager = getSupportLoaderManager();
             // Get our Loader by calling getLoader and passing the ID we specified
             Loader<Void> Loader = loaderManager.getLoader(NEWS_APP_LOADER);
@@ -138,10 +138,12 @@ public class MainActivity extends AppCompatActivity implements NewsAdapter.ListI
                 URL  url = NetworkUtils.buildUrl("the-next-web", "latest");
                 SQLiteDatabase sqldb = new DBHelper(MainActivity.this).getWritableDatabase();
                 try {
-                    DatabaseUtils.deleteAll(sqldb);
                     String json = NetworkUtils.getResponseFromHttpUrl(url);
                     result = NetworkUtils.parseJson(json);
-                    DatabaseUtils.bulkInsert(sqldb, result);
+                            if(result!=null) {
+                                DatabaseUtils.deleteAll(sqldb);
+                                DatabaseUtils.bulkInsert(sqldb, result);
+                            }
                 } catch (Exception e) {
                     e.printStackTrace();
                 } finally {
