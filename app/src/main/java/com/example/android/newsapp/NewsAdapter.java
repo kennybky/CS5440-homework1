@@ -1,15 +1,20 @@
 package com.example.android.newsapp;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.example.android.newsapp.models.NewsItem;
 
 import java.util.ArrayList;
+
+import static com.example.android.newsapp.models.Contract.TABLE_NEWS.*;
 
 /**
  * Created by kenny on 6/26/2017.
@@ -17,14 +22,15 @@ import java.util.ArrayList;
 
 public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsAdapterViewHolder> {
     private final ListItemClickListener mOnClickListener;
-private ArrayList<NewsItem> mNewsData;
+    private Cursor cursor;
 
     public interface ListItemClickListener {
         void onListItemClick(int position);
     }
 
-    public NewsAdapter(ListItemClickListener listener){
+    public NewsAdapter(Cursor cursor, ListItemClickListener listener){
         mOnClickListener= listener;
+        this.cursor = cursor;
     }
 
     @Override
@@ -40,28 +46,31 @@ private ArrayList<NewsItem> mNewsData;
 
         @Override
         public void onBindViewHolder(NewsAdapterViewHolder holder, int position) {
-                NewsItem data = mNewsData.get(position);
-                holder.bind(data);
+                holder.bind(position);
         }
 
         @Override
         public int getItemCount() {
-                if (mNewsData ==null)
-                return 0;
-                else return mNewsData.size();
+                return cursor.getCount();
         }
 
-        public void setNewsData(ArrayList<NewsItem> data) {
-                mNewsData = data;
-                notifyDataSetChanged();
+        public void swapCursor(Cursor newCursor) {
+            if (cursor != null) cursor.close();
+            cursor = newCursor;
+            if (newCursor != null) {
+                // Force the RecyclerView to refresh
+                this.notifyDataSetChanged();
+            }
         }
 
-        public ArrayList<NewsItem> getNewsData() {
-            return mNewsData;
+        public String getNewsURL(int position) {
+            cursor.moveToPosition(position);
+            return cursor.getString(cursor.getColumnIndex(COLUMN_NAME_URL));
         }
 
         class NewsAdapterViewHolder extends RecyclerView.ViewHolder implements  View.OnClickListener {
                 TextView mTitle, mDescription, mDate;
+
 
                 public NewsAdapterViewHolder(View itemView) {
                         super(itemView);
@@ -71,10 +80,13 @@ private ArrayList<NewsItem> mNewsData;
                     itemView.setOnClickListener(this);
                 }
 
-                void bind(NewsItem item) {
-                        mTitle.setText(item.getTitle());
-                        mDescription.setText(item.getDescription());
-                        mDate.setText(item.getDate());
+                void bind(int pos) {
+                    cursor.moveToPosition(pos);
+                    mTitle.setText(cursor.getString(cursor.getColumnIndex(COLUMN_NAME_TITLE)));
+                        mDescription.setText(cursor.getString(cursor.getColumnIndex(COLUMN_NAME_DESCRIPTION)));
+                        mDate.setText(cursor.getString(cursor.getColumnIndex(COLUMN_NAME_DATE)));
+
+
                 }
 
             @Override

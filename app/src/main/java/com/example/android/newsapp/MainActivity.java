@@ -1,5 +1,10 @@
 package com.example.android.newsapp;
 
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.AsyncTaskLoader;
+import android.support.v4.content.Loader;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -16,18 +21,24 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.android.newsapp.models.DBHelper;
+import com.example.android.newsapp.models.DatabaseUtils;
 import com.example.android.newsapp.models.NewsItem;
 
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity implements NewsAdapter.ListItemClickListener {
+public class MainActivity extends AppCompatActivity implements NewsAdapter.ListItemClickListener,
+        LoaderManager.LoaderCallbacks<Void> {
 
     Toast mToast;
     private RecyclerView mRecyclerView;
     private NewsAdapter mNewsAdapter;
     private ProgressBar progressBar;
+    final int NEWS_APP_LOADER = 22;
+    private SQLiteDatabase db;
+    private Cursor cursor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,23 +51,38 @@ public class MainActivity extends AppCompatActivity implements NewsAdapter.ListI
         LinearLayoutManager layoutManager
                 = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
 
-
-
         mRecyclerView.setLayoutManager(layoutManager);
         mRecyclerView.setHasFixedSize(true);
-        mNewsAdapter = new NewsAdapter(this);
-        mRecyclerView.setAdapter(mNewsAdapter);
-        loadNewsData();
+
+        Bundle queryBundle = new Bundle();
+        getSupportLoaderManager().initLoader(NEWS_APP_LOADER, null, MainActivity.this);
+    //loadNewsData();
     }
 
-    public void loadNewsData() {
+   /* public void loadNewsData() {
         showNewsDataView();
         NetworkTask task = new NetworkTask();
         task.execute();
-    }
+    }*/
 
     private void showNewsDataView() {
         mRecyclerView.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        db = new DBHelper(MainActivity.this).getReadableDatabase();
+        cursor = DatabaseUtils.getAll(db);
+        mNewsAdapter = new NewsAdapter(cursor, this);
+        mRecyclerView.setAdapter(mNewsAdapter);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        db.close();
+        cursor.close();
     }
 
 
@@ -70,24 +96,79 @@ public class MainActivity extends AppCompatActivity implements NewsAdapter.ListI
     public boolean onOptionsItemSelected(MenuItem item) {
         int itemNumber = item.getItemId();
         if (itemNumber == R.id.search) {
-            mNewsAdapter.setNewsData(null);
-        loadNewsData();
+            mNewsAdapter.swapCursor(null);
+            LoaderManager loaderManager = getSupportLoaderManager();
+            // Get our Loader by calling getLoader and passing the ID we specified
+            Loader<Void> Loader = loaderManager.getLoader(NEWS_APP_LOADER);
+            // COMPLETED (23) If the Loader was null, initialize it. Else, restart it.
+            if (Loader == null) {
+                loaderManager.initLoader(NEWS_APP_LOADER, null, this);
+            } else {
+                loaderManager.restartLoader(NEWS_APP_LOADER, null, this).forceLoad();
+            }
+       // loadNewsData();
         }
         return true;
     }
 
     @Override
     public void onListItemClick(int position) {
-    ArrayList<NewsItem> data = mNewsAdapter.getNewsData();
-        Uri webpage = Uri.parse(data.get(position).getUrl());
+    String data = mNewsAdapter.getNewsURL(position);
+        Uri webpage = Uri.parse(data);
         Intent intent = new Intent(Intent.ACTION_VIEW, webpage);
         if (intent.resolveActivity(getPackageManager()) != null) {
             startActivity(intent);
         }
     }
 
+    @Override
+    public Loader<Void> onCreateLoader(int id, Bundle args) {
+        return new AsyncTaskLoader<Void>(this) {
 
-    class NetworkTask extends AsyncTask<URL, Void, ArrayList<NewsItem>> {
+            @Override
+            protected void onStartLoading() {
+                progressBar.setVisibility(View.VISIBLE);
+                //  Force a load
+                forceLoad();
+            }
+
+            @Override
+            public Void loadInBackground() {
+                ArrayList<NewsItem> result = null;
+                URL  url = NetworkUtils.buildUrl("the-next-web", "latest");
+                SQLiteDatabase sqldb = new DBHelper(MainActivity.this).getWritableDatabase();
+                try {
+                    DatabaseUtils.deleteAll(sqldb);
+                    String json = NetworkUtils.getResponseFromHttpUrl(url);
+                    result = NetworkUtils.parseJson(json);
+                    DatabaseUtils.bulkInsert(sqldb, result);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    sqldb.close();
+                }
+                return null;
+            }
+        };
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Void> loader, Void data) {
+        progressBar.setVisibility(View.GONE);
+            showNewsDataView();
+        db = new DBHelper(MainActivity.this).getReadableDatabase();
+        cursor = DatabaseUtils.getAll(db);
+            mNewsAdapter.swapCursor(cursor);
+
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Void> loader) {
+
+    }
+
+
+    /*class NetworkTask extends AsyncTask<URL, Void, ArrayList<NewsItem>> {
 
         @Override
         protected void onPreExecute() {
@@ -123,6 +204,6 @@ public class MainActivity extends AppCompatActivity implements NewsAdapter.ListI
             }
         }
 
-    }
+    }*/
 
 }
