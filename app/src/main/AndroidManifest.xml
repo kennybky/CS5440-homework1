@@ -27,6 +27,10 @@
                 <category android:name="android.intent.category.BROWSABLE" />
             </intent-filter>
         </activity>
+        <service android:name=".RefreshJobService"
+            android:exported="false">
+            <action android:name="com.firebase.jobdispatcher.ACTION_EXECUTE"/>
+        </service>
     </application>
 
 </manifest>

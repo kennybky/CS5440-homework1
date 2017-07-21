@@ -11,6 +11,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.example.android.newsapp.models.NewsItem;
+import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 
@@ -23,7 +24,7 @@ import static com.example.android.newsapp.models.Contract.TABLE_NEWS.*;
 public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsAdapterViewHolder> {
     private final ListItemClickListener mOnClickListener;
     private Cursor cursor;
-
+    private Context context;
     public interface ListItemClickListener {
         void onListItemClick(int position);
     }
@@ -35,7 +36,7 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsAdapterVie
 
     @Override
         public NewsAdapterViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-                Context context = parent.getContext();
+                context = parent.getContext();
                 int layoutIdForListItem = R.layout.list_item;
                 LayoutInflater inflater = LayoutInflater.from(context);
                 boolean shouldAttachToParentImmediately = false;
@@ -70,6 +71,7 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsAdapterVie
 
         class NewsAdapterViewHolder extends RecyclerView.ViewHolder implements  View.OnClickListener {
                 TextView mTitle, mDescription, mDate;
+            ImageView img;
 
 
                 public NewsAdapterViewHolder(View itemView) {
@@ -77,15 +79,22 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsAdapterVie
                         mTitle = (TextView) itemView.findViewById(R.id.displayTitle);
                         mDescription = (TextView) itemView.findViewById(R.id.displayDescription);
                         mDate = (TextView) itemView.findViewById(R.id.displayDate);
+                        img = (ImageView) itemView.findViewById(R.id.myImageView);
+
                     itemView.setOnClickListener(this);
                 }
 
-                void bind(int pos) {
+                void bind(int pos)  {
                     cursor.moveToPosition(pos);
                     mTitle.setText(cursor.getString(cursor.getColumnIndex(COLUMN_NAME_TITLE)));
                         mDescription.setText(cursor.getString(cursor.getColumnIndex(COLUMN_NAME_DESCRIPTION)));
                         mDate.setText(cursor.getString(cursor.getColumnIndex(COLUMN_NAME_DATE)));
-
+                    String url = cursor.getString(cursor.getColumnIndex(COLUMN_NAME_URL_TO_IMAGE));
+                    if(url != null){
+                        Picasso.with(context)
+                                .load(url)
+                                .into(img);
+                    }
 
                 }
 

@@ -1,8 +1,12 @@
 package com.example.android.newsapp;
 
+import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.util.Log;
 
+import com.example.android.newsapp.models.DBHelper;
+import com.example.android.newsapp.models.DatabaseUtils;
 import com.example.android.newsapp.models.NewsItem;
 
 import org.json.JSONArray;
@@ -107,6 +111,25 @@ public class NetworkUtils {
         }
 
         return result;
+    }
+
+    public static void reloadDatabase(Context context)  {
+        ArrayList<NewsItem> result = null;
+        URL  url = buildUrl("the-next-web", "latest");
+        SQLiteDatabase sqldb = new DBHelper(context).getWritableDatabase();
+        try {
+            String json = getResponseFromHttpUrl(url);
+            result = parseJson(json);
+            if(result!=null) {
+                DatabaseUtils.deleteAll(sqldb);
+                DatabaseUtils.bulkInsert(sqldb, result);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            sqldb.close();
+        }
+
     }
 
 
