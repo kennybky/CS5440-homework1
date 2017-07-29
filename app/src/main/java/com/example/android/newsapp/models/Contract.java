@@ -6,6 +6,7 @@ package com.example.android.newsapp.models;
 
 import android.provider.BaseColumns;
 
+//Creates a contract fro the database to store important information about the database
 public class Contract {
 
     public static class TABLE_NEWS implements BaseColumns{

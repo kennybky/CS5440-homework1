@@ -17,6 +17,8 @@ public class DBHelper extends SQLiteOpenHelper {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
+
+    //Create the news table when the class is initialized
     @Override
     public void onCreate(SQLiteDatabase db) {
         String queryString = "CREATE TABLE " + Contract.TABLE_NEWS.TABLE_NAME + " ("+

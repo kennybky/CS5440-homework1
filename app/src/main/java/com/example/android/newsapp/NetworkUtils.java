@@ -113,6 +113,7 @@ public class NetworkUtils {
         return result;
     }
 
+    //Reload the database called during loadinbackground in MainActivity
     public static void reloadDatabase(Context context)  {
         ArrayList<NewsItem> result = null;
         URL  url = buildUrl("the-next-web", "latest");
@@ -121,8 +122,8 @@ public class NetworkUtils {
             String json = getResponseFromHttpUrl(url);
             result = parseJson(json);
             if(result!=null) {
-                DatabaseUtils.deleteAll(sqldb);
-                DatabaseUtils.bulkInsert(sqldb, result);
+                DatabaseUtils.deleteAll(sqldb);//Deletes the old info in the database
+                DatabaseUtils.bulkInsert(sqldb, result);//Inserts new information in the database
             }
         } catch (Exception e) {
             e.printStackTrace();

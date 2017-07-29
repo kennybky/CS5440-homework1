@@ -21,24 +21,31 @@ public class Dispatcher {
 
     private static boolean init;
 
+    //synchronized to ensure concurrency
     synchronized public static void schedule(@NonNull final Context context){
+
+        //If job is already scheduled return
         if(init) {
             return;
         }
-
+        //Instantiates an instance of Driver
         Driver driver = new GooglePlayDriver(context);
+
+        //Instantiates a new instance of FirebaseJobDispatcher
         FirebaseJobDispatcher dispatcher = new FirebaseJobDispatcher(driver);
 
+        //Sets constraints for the job and builds it
         Job constraintRefreshJob = dispatcher.newJobBuilder()
-                .setService(RefreshJobService.class)
+                .setService(RefreshJobService.class)//Sets the service that performs the task
                 .setTag("news_refresh")
                 .setConstraints(Constraint.ON_ANY_NETWORK)
                 .setLifetime(Lifetime.FOREVER)
                 .setRecurring(true)
-                .setTrigger(Trigger.executionWindow(0,60))
+                .setTrigger(Trigger.executionWindow(0,60))//Refresh every 60 seconds
                 .setReplaceCurrent(true)
                 .build();
 
+        //Schedules the job and sets init to true to indicate the job is already scheduled
         dispatcher.schedule(constraintRefreshJob);
         init = true;
 

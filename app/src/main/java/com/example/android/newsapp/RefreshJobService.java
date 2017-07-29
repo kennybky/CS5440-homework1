@@ -13,6 +13,8 @@ import com.firebase.jobdispatcher.JobService;
 public class RefreshJobService extends JobService  {
     AsyncTaskLoader mBackgroundTask;
 
+
+    //Called when the job starts
     @Override
     public boolean onStartJob(final JobParameters job) {
         mBackgroundTask = new AsyncTaskLoader(this) {
@@ -20,7 +22,7 @@ public class RefreshJobService extends JobService  {
             @Override
             protected void onStartLoading() {
                 Toast.makeText(RefreshJobService.this, "News refreshed", Toast.LENGTH_SHORT).show();
-                forceLoad();
+                forceLoad();//Forces a load
             }
             @Override
             public  Void loadInBackground() {
@@ -30,12 +32,13 @@ public class RefreshJobService extends JobService  {
         };
 
 
-        mBackgroundTask.startLoading();
-        jobFinished(job, false);
+        mBackgroundTask.startLoading();//Starts the asynctaskloader
+        jobFinished(job, false);//Called to provide indication job has completed. Set to false to indicated it doesn't need rescheduling
 
         return true;
     }
 
+    //If the job is stopped, cancel the AsyncTaskLoader
     @Override
     public boolean onStopJob(JobParameters job) {
 

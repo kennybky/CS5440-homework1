@@ -15,7 +15,7 @@ import static com.example.android.newsapp.models.Contract.TABLE_NEWS.*;
 
 public class DatabaseUtils {
 
-    //Gets all the
+    //Gets all the rows in the TABLE_NEWS table
     public static Cursor getAll(SQLiteDatabase db) {
         Cursor cursor = db.query(
                 TABLE_NAME,
@@ -29,6 +29,7 @@ public class DatabaseUtils {
         return cursor;
     }
 
+    //Inserts data in the news table
     public static void bulkInsert(SQLiteDatabase db, ArrayList<NewsItem> articles) {
         db.beginTransaction();
         try {
@@ -49,6 +50,7 @@ public class DatabaseUtils {
         }
     }
 
+    //Deletes all data in the news table
     public static void deleteAll(SQLiteDatabase db) {
         db.delete(TABLE_NAME, null, null);
     }

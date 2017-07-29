@@ -62,15 +62,22 @@ public class MainActivity extends AppCompatActivity implements NewsAdapter.ListI
         mNewsAdapter = new NewsAdapter(cursor, this);
         mRecyclerView.setAdapter(mNewsAdapter);
 
+        /**Gets shared preferences file, and get a boolean value.
+         * if the variable does not exist, create a variable and set its default value to true
+         * **/
+
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         boolean isFirst = prefs.getBoolean("first", true);
 
+        //If the boolean is true meaning it is the first instance since installation, so start the loader
         if (isFirst) {
             getSupportLoaderManager().initLoader(NEWS_APP_LOADER, null, MainActivity.this);
             SharedPreferences.Editor editor = prefs.edit();
             editor.putBoolean("first", false);
             editor.commit();
         }
+
+        //Schedule a job
         Dispatcher.schedule(this);
 
 
@@ -123,7 +130,7 @@ public class MainActivity extends AppCompatActivity implements NewsAdapter.ListI
             LoaderManager loaderManager = getSupportLoaderManager();
             // Get our Loader by calling getLoader and passing the ID we specified
             Loader<Void> Loader = loaderManager.getLoader(NEWS_APP_LOADER);
-            // COMPLETED (23) If the Loader was null, initialize it. Else, restart it.
+            //  If the Loader was null, initialize it. Else, restart it.
             if (Loader == null) {
                 loaderManager.initLoader(NEWS_APP_LOADER, null, this);
             } else {
@@ -144,6 +151,9 @@ public class MainActivity extends AppCompatActivity implements NewsAdapter.ListI
         }
     }
 
+    /*When the loader is initialized or started, return an Asynctaskloader
+    that loads data in the database
+    **/
     @Override
     public Loader<Void> onCreateLoader(int id, Bundle args) {
         return new AsyncTaskLoader<Void>(this) {
@@ -157,22 +167,24 @@ public class MainActivity extends AppCompatActivity implements NewsAdapter.ListI
 
             @Override
             public Void loadInBackground() {
-               NetworkUtils.reloadDatabase(MainActivity.this);
+               NetworkUtils.reloadDatabase(MainActivity.this);//Reload the database with new information
                 return null;
             }
         };
     }
-
+/*when the loader is finished refresh the view
+* */
     @Override
     public void onLoadFinished(Loader<Void> loader, Void data) {
         progressBar.setVisibility(View.GONE);
             showNewsDataView();
         db = new DBHelper(MainActivity.this).getReadableDatabase();
-        cursor = DatabaseUtils.getAll(db);
-            mNewsAdapter.swapCursor(cursor);
+        cursor = DatabaseUtils.getAll(db);//get a cursor containg the information
+            mNewsAdapter.swapCursor(cursor);//Change the cursor to reflect new data
 
     }
 
+    //We have to override this method or else we get complaints
     @Override
     public void onLoaderReset(Loader<Void> loader) {
 

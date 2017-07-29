@@ -3,6 +3,7 @@ package com.example.android.newsapp;
 import android.content.Context;
 import android.database.Cursor;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,7 +14,10 @@ import android.widget.TextView;
 import com.example.android.newsapp.models.NewsItem;
 import com.squareup.picasso.Picasso;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 import static com.example.android.newsapp.models.Contract.TABLE_NEWS.*;
 
@@ -88,7 +92,15 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsAdapterVie
                     cursor.moveToPosition(pos);
                     mTitle.setText(cursor.getString(cursor.getColumnIndex(COLUMN_NAME_TITLE)));
                         mDescription.setText(cursor.getString(cursor.getColumnIndex(COLUMN_NAME_DESCRIPTION)));
-                        mDate.setText(cursor.getString(cursor.getColumnIndex(COLUMN_NAME_DATE)));
+                            String date = cursor.getString(cursor.getColumnIndex(COLUMN_NAME_DATE));
+                    try {
+                        String formattedDate= DateParse(date);
+                        mDate.setText(formattedDate);
+                    } catch (ParseException e) {
+                        mDate.setText(date);
+                    }
+
+
                     String url = cursor.getString(cursor.getColumnIndex(COLUMN_NAME_URL_TO_IMAGE));
                     if(url != null){
                         Picasso.with(context)
@@ -104,5 +116,14 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsAdapterVie
                 mOnClickListener.onListItemClick(clickedPosition);
             }
         }
+
+    public static String DateParse(String input) throws ParseException {
+        SimpleDateFormat parser = new SimpleDateFormat("yyyy-MM-d'T'HH:mm:ss'Z'");
+        Date date = parser.parse(input);
+        SimpleDateFormat formatter = new SimpleDateFormat("MMM dd, yyyy - hh:mma");
+        String formattedDate = formatter.format(date);
+        Log.d("NewsAdapter", formattedDate);
+        return formattedDate;
+    }
 
 }
